@@ -1,0 +1,2 @@
+# DesignPatternInGo
+Experiment with Go
