@@ -31,8 +31,6 @@ func TestNewSparseMatrix(t *testing.T) {
 }
 
 func TestAdd(t *testing.T) {
-	matrix, _ := sparseMatrix.NewSparseMatrix(2, 2)
-
 	tests := map[string]struct {
 		row          int
 		col          int
@@ -45,10 +43,11 @@ func TestAdd(t *testing.T) {
 		"over row upperBound":  {row: 100, col: 1, expect_err: true},
 		"over col upperBound":  {row: 1, col: 100, expect_err: true},
 		"zero value":           {row: 0, col: 0, val: 0, expect_err: false},
-		"correct row and col":  {row: 0, col: 0, val: 1, expect_err: false, expect_value: 1},
+		"first row and col":    {row: 0, col: 0, val: 1, expect_err: false, expect_value: 1},
 		"diagonal row and col": {row: 1, col: 1, val: 2, expect_err: false, expect_value: 2},
 	}
 	for key, test := range tests {
+		matrix, _ := sparseMatrix.NewSparseMatrix(2, 2)
 		err := matrix.Add(sparseMatrix.Data{Row: test.row, Col: test.col, Value: test.val})
 		if test.expect_err {
 			assert.NotNil(t, err, fmt.Sprintf("test case: %s", key))
@@ -66,4 +65,65 @@ func TestAdd(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestGetRowSortByCol(t *testing.T) {
+	matrix, _ := sparseMatrix.NewSparseMatrix(2, 2)
+	row, err := matrix.GetRowSortByCol(0)
+	assert.Nil(t, err, "row 0 not present")
+	assert.Nil(t, row, "row 0 not present")
+
+	err = matrix.Add(sparseMatrix.Data{Row: 0, Col: 1, Value: 10})
+	assert.Nil(t, err, "add 10 to (0,1)")
+	err = matrix.Add(sparseMatrix.Data{Row: 0, Col: 0, Value: 1})
+	assert.Nil(t, err, "add 1 to (0,0)")
+
+	row, err = matrix.GetRowSortByCol(1)
+	assert.Nil(t, err, "row 1 not present")
+	assert.Nil(t, row, "row 1 not present")
+	row, err = matrix.GetRowSortByCol(100)
+	assert.NotNil(t, err, "row out of range error")
+	assert.Nil(t, row, "row out of range error")
+	row, err = matrix.GetRowSortByCol(0)
+	assert.Nil(t, err, "row 0 returned")
+	assert.Equal(t, 2, len(row), "expect 2 data in row 0")
+	assert.Equal(t, 1, row[0].Value, "expect first col in row")
+	assert.Equal(t, 10, row[1].Value, "expect 2nd col in row")
+}
+
+func TestGetData_checkRowAndCol(t *testing.T) {
+	matrix, _ := sparseMatrix.NewSparseMatrix(2, 2)
+	tests := map[string]struct {
+		row int
+		col int
+	}{
+		"negative row":        {row: -1},
+		"negative col":        {row: 1, col: -1},
+		"over row upperBound": {row: 100, col: 1},
+		"over col upperBound": {row: 1, col: 100},
+	}
+	for key, test := range tests {
+		data, err := matrix.GetData(test.row, test.col)
+		assert.NotNil(t, err, fmt.Sprintf("key: %s", key))
+		assert.Nil(t, data, "key: %s", key)
+	}
+}
+
+func TestGetData(t *testing.T) {
+	matrix, _ := sparseMatrix.NewSparseMatrix(2, 2)
+	matrix.Add(sparseMatrix.Data{Row: 0, Col: 0, Value: 1})
+	matrix.Add(sparseMatrix.Data{Row: 1, Col: 1, Value: 10})
+
+	data, err := matrix.GetData(0, 1)
+	assert.Nil(t, err, "data not present at (0,1)")
+	assert.Nil(t, data, "data not present at (0,1)")
+
+	data, err = matrix.GetData(1, 1)
+	assert.Nil(t, err, "found data at (1,1)")
+	assert.Equal(t, 10, data.Value, "found data at (1,1)")
+
+	matrix.Add(sparseMatrix.Data{Row: 0, Col: 1, Value: 2})
+	data, err = matrix.GetData(0, 1)
+	assert.Nil(t, err, "found data at (0,1)")
+	assert.Equal(t, 2, data.Value, "found data at (0,1)")
 }
