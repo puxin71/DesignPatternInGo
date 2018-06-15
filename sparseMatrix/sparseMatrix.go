@@ -1,24 +1,29 @@
-package sparseMatrix
+package sparsematrix
 
 import (
-	"bitbucket.ciena.com/scm/bpp_infrastructure/pmprocessor/calculations"
+	"errors"
 	"fmt"
 	"math"
 	"sort"
 )
 
 const (
+	// MaximumRows is the most allowed upper boundary for number of rows
 	MaximumRows = math.MaxUint32
+	// MaximumCols is the most allowed upper boundary for number of columns
 	MaximumCols = math.MaxUint32
-	InvalidResult = math.Inf(0)
+	// DefaultPatchSize defines number of rows used to calculate Matrix Vector product
+	DefaultPatchSize = 100
 )
 
+// Data identifies the row and column of a integer value in the spareMatrix
 type Data struct {
 	Row   int
 	Col   int
 	Value int
 }
 
+// RowList defines the non-zero data in a row
 type RowList []Data
 
 // ByColumn implements sort.Interface for []Data based on
@@ -30,12 +35,13 @@ func (c ByColumn) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
 func (c ByColumn) Less(i, j int) bool { return c[i].Col < c[j].Col }
 
 type sparseMatrix struct {
-	rowUpperBound int             // maximum number of Rows allowed
-	colUpperBound int             // maximum of Columns allowed
-	dataList      map[int]RowList // use row has the key
-	batchedNumOfRows int // number of rows in a batch
+	rowUpperBound    int             // maximum number of Rows allowed
+	colUpperBound    int             // maximum of Columns allowed
+	dataList         map[int]RowList // use row has the key
+	batchedNumOfRows int             // number of rows in a batch
 }
 
+// SparseMatrix defines the public APIs of spareMatrix
 type SparseMatrix interface {
 	Add(number Data) error
 	Remove(number Data) error
@@ -43,7 +49,7 @@ type SparseMatrix interface {
 	GetRowSortByCol(row int) (RowList, error)
 	PrintRow(row int) string
 	Print() string
-	LargeMatrixVectorProduct(colMetrix []int, batchSize int) (int, error)
+	LargeMatrixVectorProduct(colMatrix []int, batchSize int) ([]int, error)
 }
 
 // NewSparseMatrix creates a matrix with a row and column upperBound
@@ -167,13 +173,10 @@ func (m *sparseMatrix) Print() string {
 }
 
 // LargeMatrixVectorProduct performs concurrent multiplication on batch of rows.
-// Merge the result in the end. Use this API only if the matrix is large,
-// rows > 100,000.
+// Merge the result in the end. Use this API only if the matrix is large.
 // equation: result[n,1] = matrix[n,m] * columnVector[m,1]
-func (m *sparseMatrix) LargeMatrixVectorProduct(colMetrix []int, batchSize int) ([]int, error) {
-	numOfRows : = 0
-
-	if err := m.validColMetrix(colMetrix), err != nil {
+func (m *sparseMatrix) LargeMatrixVectorProduct(colMatrix []int, batchSize int) ([]int, error) {
+	if err := m.validColMatrix(colMatrix); err != nil {
 		return nil, err
 	}
 	if batchSize <= 0 {
@@ -184,17 +187,17 @@ func (m *sparseMatrix) LargeMatrixVectorProduct(colMetrix []int, batchSize int) 
 	}
 
 	// calculate range of rows for each batch operation
-
+	// todo...
 	return nil, nil
 }
 
-func (m *sparseMatrix) validColMetrix(colMetrix []int) error {
-	// num of rows of colMetrix = num of columns of sparseMatrix
-	if len(colMetrix) == 0 {
+func (m *sparseMatrix) validColMatrix(colMatrix []int) error {
+	// num of rows of colMatrix = num of columns of sparsematrix
+	if len(colMatrix) == 0 {
 		return errors.New("null column matrix vector")
 	}
-	if len(colMetrix) != m.colUpperBound {
-		return fmt.Errorf("incompatible matrix and vector. vector row: %d, matrix columns: %d", len(colMetrix), m.colUpperBound)
+	if len(colMatrix) != m.colUpperBound {
+		return fmt.Errorf("incompatible matrix and vector. vector row: %d, matrix columns: %d", len(colMatrix), m.colUpperBound)
 	}
 	return nil
 }
