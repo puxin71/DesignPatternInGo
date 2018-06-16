@@ -3,6 +3,7 @@ package sparsematrix_test
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	"testing"
 
 	sparsematrix "github.com/puxin71/DesignPatternInGo/sparseMatrix"
@@ -67,9 +68,9 @@ func TestAdd(t *testing.T) {
 	}
 }
 
-func TestGetRowSortByCol(t *testing.T) {
+func TestGetRow(t *testing.T) {
 	matrix, _ := sparsematrix.NewSparseMatrix(2, 2)
-	row, err := matrix.GetRowSortByCol(0)
+	row, err := matrix.GetRow(0)
 	assert.Nil(t, err, "row 0 not present")
 	assert.Nil(t, row, "row 0 not present")
 
@@ -78,13 +79,13 @@ func TestGetRowSortByCol(t *testing.T) {
 	err = matrix.Add(sparsematrix.Data{Row: 0, Col: 0, Value: 1})
 	assert.Nil(t, err, "add 1 to (0,0)")
 
-	row, err = matrix.GetRowSortByCol(1)
+	row, err = matrix.GetRow(1)
 	assert.Nil(t, err, "row 1 not present")
 	assert.Nil(t, row, "row 1 not present")
-	row, err = matrix.GetRowSortByCol(100)
+	row, err = matrix.GetRow(100)
 	assert.NotNil(t, err, "row out of range error")
 	assert.Nil(t, row, "row out of range error")
-	row, err = matrix.GetRowSortByCol(0)
+	row, err = matrix.GetRow(0)
 	assert.Nil(t, err, "row 0 returned")
 	assert.Equal(t, 2, len(row), "expect 2 data in row 0")
 	assert.Equal(t, 1, row[0].Value, "expect first col in row")
@@ -126,4 +127,73 @@ func TestGetData(t *testing.T) {
 	data, err = matrix.GetData(0, 1)
 	assert.Nil(t, err, "found data at (0,1)")
 	assert.Equal(t, 2, data.Value, "found data at (0,1)")
+}
+
+func TestPrint(t *testing.T) {
+	matrix, _ := sparsematrix.NewSparseMatrix(10, 10)
+	for i := 0; i < 10; i++ {
+		for j := 0; j < 10; j++ {
+			if i == j {
+				matrix.Add(sparsematrix.Data{Row: i, Col: j, Value: int(math.Pow10(i))})
+			}
+		}
+	}
+	t.Log(matrix.Print())
+
+	matrix, _ = sparsematrix.NewSparseMatrix(5, 9)
+	maxLoops := 100
+	numberAdded := 0
+
+	for i := 0; i < 30; i++ {
+		if generateUniqueData(matrix, maxLoops) {
+			numberAdded++
+		}
+	}
+	t.Logf("number added: %d", numberAdded)
+	t.Log(matrix.Print())
+}
+
+func generateUniqueData(matrix sparsematrix.SparseMatrix, maxRetries int) bool {
+	var err error
+
+	if matrix == nil {
+		return false
+	}
+	count := maxRetries
+	row := generateRandomIndex(0, matrix.MaxRow())
+	col := generateRandomIndex(0, matrix.MaxColumn())
+	data, _ := matrix.GetData(row, col)
+	for (data != nil || err != nil) && count > 0 {
+		row = generateRandomIndex(0, matrix.MaxRow())
+		col = generateRandomIndex(0, matrix.MaxColumn())
+		data, err = matrix.GetData(row, col)
+		count--
+	}
+	if count == 0 {
+		return false
+	}
+
+	value := int(math.Mod(float64(rand.Int()), float64(100)))
+	count = maxRetries
+	for value == 0 && count > 0 {
+		value = int(math.Mod(float64(rand.Int()), float64(100)))
+		count--
+	}
+	if count == 0 {
+		return false
+	}
+
+	newData := sparsematrix.Data{Row: row, Col: col, Value: int(math.Mod(float64(rand.Int()), float64(100)))}
+	matrix.Add(newData)
+	return true
+}
+
+func generateRandomIndex(min, max int) int {
+	// generate random row and column index using linear congruential generator.
+	// result = rand(int) Mod (max - min + 1)
+	if min > max {
+		return 0
+	}
+	idx := int(math.Mod(float64(rand.Int()), float64(max-min+1)))
+	return idx
 }

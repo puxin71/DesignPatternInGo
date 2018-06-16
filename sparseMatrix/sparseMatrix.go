@@ -1,6 +1,7 @@
 package sparsematrix
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"math"
@@ -13,7 +14,7 @@ const (
 	// MaximumCols is the most allowed upper boundary for number of columns
 	MaximumCols = math.MaxUint32
 	// DefaultPatchSize defines number of rows used to calculate Matrix Vector product
-	DefaultPatchSize = 100
+	DefaultPatchSize = 30
 )
 
 // Data identifies the row and column of a integer value in the spareMatrix
@@ -46,10 +47,12 @@ type SparseMatrix interface {
 	Add(number Data) error
 	Remove(number Data) error
 	GetData(row, col int) (*Data, error)
-	GetRowSortByCol(row int) (RowList, error)
+	GetRow(row int) (RowList, error)
 	PrintRow(row int) string
 	Print() string
 	LargeMatrixVectorProduct(colMatrix []int, batchSize int) ([]int, error)
+	MaxRow() int
+	MaxColumn() int
 }
 
 // NewSparseMatrix creates a matrix with a row and column upperBound
@@ -90,14 +93,15 @@ func (m *sparseMatrix) Add(number Data) error {
 		return nil
 	}
 
-	// note that at this point, the numbers are
-	// added to the correct rows, but within a row,
-	// the numbers may not be sorted with an increasing column index
+	// add the new value to a row with ascending column order
+	// use Golang built-in sort which uses a combination of
+	// quick sort and insertion sort
 	var aList RowList
 	if _, ok := m.dataList[number.Row]; ok {
 		aList = m.dataList[number.Row]
 	}
 	aList = append(aList, number)
+	sort.Sort(ByColumn(aList))
 	m.dataList[number.Row] = aList
 
 	return nil
@@ -123,9 +127,8 @@ func (m *sparseMatrix) isValidColumn(col int) error {
 	return nil
 }
 
-// GetRowSortByCol returns list of integers that are in the same row.
-// the numbers are sorted by the column index in the asceding order
-func (m *sparseMatrix) GetRowSortByCol(row int) (RowList, error) {
+// Get all values in a row of the sparse matrix.
+func (m *sparseMatrix) GetRow(row int) (RowList, error) {
 	if err := m.isValidRow(row); err != nil {
 		return nil, err
 	}
@@ -136,7 +139,6 @@ func (m *sparseMatrix) GetRowSortByCol(row int) (RowList, error) {
 	if !ok {
 		return nil, nil
 	}
-	sort.Sort(ByColumn(rowList))
 	return rowList, nil
 }
 
@@ -145,7 +147,7 @@ func (m *sparseMatrix) GetData(row, col int) (*Data, error) {
 	if err := m.isValidColumn(col); err != nil {
 		return nil, err
 	}
-	rowList, err := m.GetRowSortByCol(row)
+	rowList, err := m.GetRow(row)
 	if err != nil {
 		return nil, err
 	}
@@ -168,8 +170,22 @@ func (m *sparseMatrix) PrintRow(row int) string {
 	panic("not impl.")
 }
 
+// Print displays the sparse matrix in the standard matrix form
 func (m *sparseMatrix) Print() string {
-	panic("not impl.")
+	var buffer bytes.Buffer
+	buffer.WriteString("\n")
+	for i := 0; i < m.rowUpperBound; i++ {
+		for j := 0; j < m.colUpperBound; j++ {
+			data, _ := m.GetData(i, j)
+			if data == nil {
+				buffer.WriteString(fmt.Sprintf("%-10v", 0))
+			} else {
+				buffer.WriteString(fmt.Sprintf("%-10v", data.Value))
+			}
+		}
+		buffer.WriteString("\n")
+	}
+	return buffer.String()
 }
 
 // LargeMatrixVectorProduct performs concurrent multiplication on batch of rows.
@@ -200,4 +216,12 @@ func (m *sparseMatrix) validColMatrix(colMatrix []int) error {
 		return fmt.Errorf("incompatible matrix and vector. vector row: %d, matrix columns: %d", len(colMatrix), m.colUpperBound)
 	}
 	return nil
+}
+
+func (m *sparseMatrix) MaxRow() int {
+	return m.rowUpperBound
+}
+
+func (m *sparseMatrix) MaxColumn() int {
+	return m.colUpperBound
 }
