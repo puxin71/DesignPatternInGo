@@ -33,7 +33,7 @@ func TestRemoveFromTop(t *testing.T) {
 	dlist.AddToButtom(&linklist.DoubleLinkCell{Value: 9, Prev: nil, Next: nil})
 	dlist.AddToButtom(&linklist.DoubleLinkCell{Value: 8, Prev: nil, Next: nil})
 	cell = dlist.RemoveFromTop()
-	assert.Equal(t, 10, cell.Value, "removed 10 from the list")
+	assert.Equal(t, 10, cell.Value.(int), "removed 10 from the list")
 	assert.Equal(t, 2, dlist.CellCount(), "left with 2 cells")
 	fmt.Printf("Traverse from top: %v\n", dlist.TraverseFromTop())
 }

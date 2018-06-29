@@ -18,9 +18,24 @@ func TestBinaryTreeAdd(t *testing.T) {
 	btree.Add(&balancedtree.Node{Value: 4, LeftChild: nil, RightChild: nil})
 	btree.Add(&balancedtree.Node{Value: 15, LeftChild: nil, RightChild: nil})
 	btree.Add(&balancedtree.Node{Value: 7, LeftChild: nil, RightChild: nil})
-	assert.Equal(t, 6, btree.NodeCount(), "added 6 nodes")
+	btree.Add(&balancedtree.Node{Value: 9, LeftChild: nil, RightChild: nil})
+	btree.Add(&balancedtree.Node{Value: 12, LeftChild: nil, RightChild: nil})
+	assert.Equal(t, 8, btree.NodeCount(), "added 6 nodes")
+	assert.Equal(t, 3, btree.Height(), "added 3 tree levels")
 
 	// print values in preOrdered traversal
 	values := btree.PreOrderTraversal()
 	fmt.Printf("preOrder traversed values: %v\n", values)
+
+	// print values in inOrdered traversal (sorted)
+	values = btree.InOrderTraversal()
+	fmt.Printf("inOrder traversed values: %v\n", values)
+
+	// print values in inOrdered traversal
+	values = btree.PostOrderTraversal()
+	fmt.Printf("postOrder traversed values: %v\n", values)
+
+	// print values in inOrdered traversal
+	values = btree.TraverseDepthFirst(btree.Root())
+	fmt.Printf("depth first traversed values: %v\n", values)
 }

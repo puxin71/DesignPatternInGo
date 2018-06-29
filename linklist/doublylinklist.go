@@ -1,11 +1,7 @@
 package linklist
 
-import (
-	"math"
-)
-
 type DoubleLinkCell struct {
-	Value int
+	Value interface{}
 	Prev  *DoubleLinkCell
 	Next  *DoubleLinkCell
 }
@@ -22,12 +18,12 @@ type DoubleLinkList interface {
 	RemoveFromTop() *DoubleLinkCell
 	AddToButtom(cell *DoubleLinkCell)
 	CellCount() int
-	TraverseFromTop() []int
+	TraverseFromTop() []interface{}
 }
 
 func NewSentinel() *DoubleLinkCell {
 	return &DoubleLinkCell{
-		Value: math.MaxInt64,
+		Value: nil,
 		Prev:  nil,
 		Next:  nil,
 	}
@@ -92,8 +88,8 @@ func (db *doubleLinkList) CellCount() int {
 	return count
 }
 
-func (db *doubleLinkList) TraverseFromTop() []int {
-	var list []int
+func (db *doubleLinkList) TraverseFromTop() []interface{} {
+	var list []interface{}
 	iterator := db.Top().Next
 	for iterator != db.Buttom() {
 		list = append(list, iterator.Value)
