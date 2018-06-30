@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBinaryTreeAdd(t *testing.T) {
+func TestBinaryTree(t *testing.T) {
 	btree := balancedtree.NewBinaryTree()
 	btree.Add(&balancedtree.Node{Value: 10, LeftChild: nil, RightChild: nil})
 	assert.Equal(t, 1, btree.NodeCount(), "added one node")
@@ -38,4 +38,13 @@ func TestBinaryTreeAdd(t *testing.T) {
 	// print values in inOrdered traversal
 	values = btree.TraverseDepthFirst(btree.Root())
 	fmt.Printf("depth first traversed values: %v\n", values)
+
+	node := btree.Get(10)
+	assert.Equal(t, btree.Root(), node, "find root value")
+	node = btree.Get(12)
+	assert.Equal(t, 12, node.Value, "find value 12")
+	node = btree.Get(8)
+	assert.Equal(t, 8, node.Value, "find value 12")
+	node = btree.Get(100)
+	assert.Nil(t, node, "100 is not in the tree")
 }

@@ -29,6 +29,9 @@ type BinaryTree interface {
 	PostOrderTraversal() []int
 	TraverseDepthFirst(node *Node) []int
 	Root() *Node
+	Get(value int) *Node
+
+	// delete node from sorted tree is complex!!!
 }
 
 func NewBinaryTree() BinaryTree {
@@ -178,4 +181,28 @@ func (t *binaryTree) createCell(node *Node) *linklist.DoubleLinkCell {
 
 func (t *binaryTree) Root() *Node {
 	return t.root
+}
+
+func (t *binaryTree) Get(value int) *Node {
+	if t.root == nil {
+		return nil
+	}
+	return t.get(t.root, value)
+}
+
+func (t *binaryTree) get(parent *Node, value int) *Node {
+	if parent.Value == value {
+		return parent
+	}
+	if value < parent.Value {
+		if parent.LeftChild == nil {
+			return nil
+		} else {
+			return t.get(parent.LeftChild, value)
+		}
+	}
+	if parent.RightChild == nil {
+		return nil
+	}
+	return t.get(parent.RightChild, value)
 }
