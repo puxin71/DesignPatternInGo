@@ -21,7 +21,8 @@ type binaryTree struct {
 }
 
 type BinaryTree interface {
-	Add(node *Node)
+	
+	BinarySortedAdd(node *Node)
 	NodeCount() int
 	Height() int
 	PreOrderTraversal() []int
@@ -29,6 +30,8 @@ type BinaryTree interface {
 	PostOrderTraversal() []int
 	TraverseDepthFirst(node *Node) []int
 	Root() *Node
+
+	// binary search on 1 trillion items take 40 steps
 	Get(value int) *Node
 
 	// delete node from sorted tree is complex!!!
@@ -38,17 +41,17 @@ func NewBinaryTree() BinaryTree {
 	return &binaryTree{root: nil, nodeCount: 0, height: 0}
 }
 
-func (t *binaryTree) Add(node *Node) {
+func (t *binaryTree) BinarySortedAdd(node *Node) {
 	if t.root == nil {
 		t.root = node
 		t.nodeCount++
 		return
 	}
-	t.add(t.root, node)
+	t.binarySortedAdd(t.root, node)
 }
 
 // sorted add. left child < node, right child >  node
-func (t *binaryTree) add(parent, node *Node) {
+func (t *binaryTree) binarySortedAdd(parent, node *Node) {
 	if node == nil {
 		return
 	}
@@ -61,12 +64,9 @@ func (t *binaryTree) add(parent, node *Node) {
 		if parent.LeftChild == nil {
 			parent.LeftChild = node
 			t.nodeCount++
-			if parent.RightChild == nil {
-				t.height++
-			}
 			fmt.Printf("parent: %d, add left child: %d\n", parent.Value, parent.LeftChild.Value)
 		} else {
-			t.add(parent.LeftChild, node)
+			t.binarySortedAdd(parent.LeftChild, node)
 		}
 	} else {
 		if parent.RightChild == nil {
@@ -74,7 +74,7 @@ func (t *binaryTree) add(parent, node *Node) {
 			t.nodeCount++
 			fmt.Printf("parent: %d, add right child: %d\n", parent.Value, parent.RightChild.Value)
 		} else {
-			t.add(parent.RightChild, node)
+			t.binarySortedAdd(parent.RightChild, node)
 		}
 	}
 }
