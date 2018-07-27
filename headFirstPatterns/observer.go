@@ -64,6 +64,8 @@ func (s *subject) RemoveObserver(os Observer) error {
 	if os == nil {
 		return errors.New("nil observer")
 	}
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 	for i, ch := range s.observers {
 		if os.Channel() == ch {
 			s.observers = append(s.observers[:i], s.observers[i+1:]...)
